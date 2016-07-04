@@ -1,4 +1,5 @@
 # Chef Server AWS security group - https://docs.chef.io/server_firewalls_and_ports.html
+
 resource "aws_security_group" "chef-server" {
   name        = "${var.hostname}.${var.domain} security group"
   description = "Chef Server ${var.hostname}.${var.domain}"
@@ -7,7 +8,10 @@ resource "aws_security_group" "chef-server" {
     Name      = "${var.hostname}.${var.domain} security group"
   }
 }
+
+
 # SSH
+
 resource "aws_security_group_rule" "chef-server_allow_22_tcp_allowed_cidrs" {
   type        = "ingress"
   from_port   = 22
@@ -16,7 +20,10 @@ resource "aws_security_group_rule" "chef-server_allow_22_tcp_allowed_cidrs" {
   cidr_blocks = ["${split(",", var.allowed_cidrs)}"]
   security_group_id = "${aws_security_group.chef-server.id}"
 }
+
+
 # HTTP (nginx)
+
 resource "aws_security_group_rule" "chef-server_allow_80_tcp" {
   type        = "ingress"
   from_port   = 80
@@ -25,7 +32,10 @@ resource "aws_security_group_rule" "chef-server_allow_80_tcp" {
   cidr_blocks = ["0.0.0.0/0"]
   security_group_id = "${aws_security_group.chef-server.id}"
 }
+
+
 # HTTPS (nginx)
+
 resource "aws_security_group_rule" "chef-server_allow_443_tcp" {
   type        = "ingress"
   from_port   = 443
@@ -34,7 +44,10 @@ resource "aws_security_group_rule" "chef-server_allow_443_tcp" {
   cidr_blocks = ["0.0.0.0/0"]
   security_group_id = "${aws_security_group.chef-server.id}"
 }
+
+
 # oc_bifrost (nginx LB)
+
 resource "aws_security_group_rule" "chef-server_allow_9683_tcp" {
   type        = "ingress"
   from_port   = 9683
@@ -43,7 +56,10 @@ resource "aws_security_group_rule" "chef-server_allow_9683_tcp" {
   cidr_blocks = ["0.0.0.0/0"]
   security_group_id = "${aws_security_group.chef-server.id}"
 }
+
+
 # opscode-push-jobs
+
 resource "aws_security_group_rule" "chef-server_allow_10000-10003_tcp" {
   type        = "ingress"
   from_port   = 10000
@@ -52,7 +68,10 @@ resource "aws_security_group_rule" "chef-server_allow_10000-10003_tcp" {
   cidr_blocks = ["0.0.0.0/0"]
   security_group_id = "${aws_security_group.chef-server.id}"
 }
+
+
 # Egress: ALL
+
 resource "aws_security_group_rule" "chef-server_allow_egress" {
   type        = "egress"
   from_port   = 0
@@ -61,15 +80,19 @@ resource "aws_security_group_rule" "chef-server_allow_egress" {
   cidr_blocks = ["0.0.0.0/0"]
   security_group_id = "${aws_security_group.chef-server.id}"
 }
+
 # AWS settings
 provider "aws" {
   access_key = "${var.aws_access_key}"
   secret_key = "${var.aws_secret_key}"
   region     = "${var.aws_region}"
 }
+
+
 #
 # Local prep
 #
+
 resource "null_resource" "chef-prep" {
   provisioner "local-exec" {
     command = <<-EOF
@@ -80,7 +103,10 @@ resource "null_resource" "chef-prep" {
       EOF
   }
 }
+
+
 # Chef provisiong attributes_json and .chef/dna.json templating
+
 resource "template_file" "attributes-json" {
   template = "${file("${path.module}/files/attributes-json.tpl")}"
   vars {
@@ -91,7 +117,10 @@ resource "template_file" "attributes-json" {
     version = "${var.server_version}"
   }
 }
+
+
 # knife.rb templating
+
 resource "template_file" "knife-rb" {
   template = "${file("${path.module}/files/knife-rb.tpl")}"
   vars {
@@ -100,9 +129,12 @@ resource "template_file" "knife-rb" {
     org    = "${var.org_short}"
   }
 }
+
+
 #
 # Provision server
 #
+
 resource "aws_instance" "chef-server" {
   depends_on    = ["null_resource.chef-prep"]
   ami           = "${lookup(var.ami_map, "${var.ami_os}-${var.aws_region}")}"
@@ -210,24 +242,33 @@ resource "aws_instance" "chef-server" {
     ]
   }
 }
+
+
 # File sourcing redirection
+
 module "encrypted_data_bag_secret" {
   source = "github.com/mengesb/tf_filemodule"
   file   = ".chef/encrypted_data_bag_secret"
 }
+
 module "knife_rb" {
   source = "github.com/mengesb/tf_filemodule"
   file   = ".chef/knife.rb"
 }
+
 module "user_pem" {
   source = "github.com/mengesb/tf_filemodule"
   file   = ".chef/${var.username}.pem"
 }
+
 module "validator" {
   source = "github.com/mengesb/tf_filemodule"
   file   = ".chef/${var.org_short}-validator.pem"
 }
+
+
 # Register Chef server against itself
+
 resource "null_resource" "chef_chef-server" {
   depends_on = ["aws_instance.chef-server"]
   connection {
@@ -249,7 +290,10 @@ resource "null_resource" "chef_chef-server" {
     version         = "${var.client_version}"
   }
 }
+
+
 # Generate pretty output format
+
 resource "template_file" "chef-server-creds" {
   depends_on = ["null_resource.chef_chef-server"]
   template = "${file("${path.module}/files/chef-server-creds.tpl")}"
@@ -262,7 +306,10 @@ resource "template_file" "chef-server-creds" {
     pem    = "${module.validator.file}"
   }
 }
+
+
 # Write generated template file
+
 resource "null_resource" "write-files" {
   provisioner "local-exec" {
     command = <<-EOC
