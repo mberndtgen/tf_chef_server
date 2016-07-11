@@ -121,7 +121,7 @@ resource "aws_instance" "chef-server" {
   # Run chef-solo and get us a Chef server
   provisioner "remote-exec" {
     inline = [
-      "sudo chef-solo -j .chef/dna.json -o 'recipe[system::default],recipe[chef-server::default],recipe[chef-server::addons]'",
+      "sudo chef-solo -j .chef/dna.json -o 'recipe[chef-server::default],recipe[chef-server::addons]'",
     ]
   }
   # Create first user and org
@@ -203,7 +203,7 @@ resource "null_resource" "chef_chef-server" {
     environment     = "_default"
     log_to_file     = "${var.log_to_file}"
     node_name       = "${aws_instance.chef-server.tags.Name}"
-    run_list        = ["recipe[system::default]","recipe[chef-client::default]","recipe[chef-client::config]","recipe[chef-client::cron]","recipe[chef-client::delete_validation]","recipe[chef-server::default]","recipe[chef-server::addons]"]
+    run_list        = ["recipe[chef-client::default]","recipe[chef-client::config]","recipe[chef-client::cron]","recipe[chef-client::delete_validation]","recipe[chef-server::default]","recipe[chef-server::addons]"]
     server_url      = "https://${aws_instance.chef-server.tags.Name}/organizations/${var.org_short}"
     skip_install    = true
     validation_client_name = "${var.org_short}-validator"
