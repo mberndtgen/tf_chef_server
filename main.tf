@@ -200,7 +200,7 @@ resource "aws_instance" "chef-server" {
   # Run chef-solo and get us a Chef server
   provisioner "remote-exec" {
     inline = [
-      "sudo chef-solo -j .chef/dna.json -o 'recipe[system::default],recipe[chef-server::default],recipe[chef-server::addons]'",
+      "sudo chef-solo -j .chef/dna.json -o 'recipe[chef-server::default],recipe[chef-server::addons]'",
     ]
   }
   # Create first user and org

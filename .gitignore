@@ -4,3 +4,6 @@ terraform.tfvars
 *.swp*
 .chef
 logfiles
+*plan.txt
+*.plan
+run*.txt
