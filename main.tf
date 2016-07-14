@@ -287,8 +287,8 @@ resource "aws_instance" "chef-server" {
   provisioner "remote-exec" {
     inline = [
       "sudo knife ssl fetch https://chef.itergo.com",
-      "sudo knife cookbook upload -a -c .chef/knife.rb --cookbook-path /var/chef/cookbooks",
-      "sudo rm -rf /var/chef/cookbooks"
+      "sudo mkdir /etc/chef/trusted_certs",
+      "sudo cp .chef/trusted_certs/* /etc/chef/trusted_certs/",
     ]
   }
 }
@@ -326,6 +326,7 @@ resource "null_resource" "chef_chef-server" {
     user        = "${lookup(var.ami_usermap, var.ami_os)}"
     private_key = "${var.aws_private_key_file}"
   }
+/* I guess we don't need that 
   # Provision with Chef
   provisioner "chef" {
     attributes_json = "${template_file.attributes-json.rendered}"
@@ -334,12 +335,12 @@ resource "null_resource" "chef_chef-server" {
     node_name       = "${aws_instance.chef-server.tags.Name}"
     run_list        = ["recipe[chef-client::default]","recipe[chef-client::config]","recipe[chef-client::cron]","recipe[chef-client::delete_validation]","recipe[chef-server::default]","recipe[chef-server::addons]"]
     server_url      = "https://${aws_instance.chef-server.tags.Name}/organizations/${var.org_short}"
-    #server_url      = "https://${aws_instance.chef-server.public_ip}/organizations/${var.org_short}"
     skip_install    = true
     validation_client_name = "${var.org_short}-validator"
     validation_key  = "${file("${module.validator.file}")}"
     version         = "${var.client_version}"
   }
+*/
 }
 
 
